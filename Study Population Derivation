@@ -1,4 +1,3 @@
-
 #########################Step 1: Suspicion of Infection Table Generation#########################
 
 --note this duplicates prescriptions
@@ -1616,6 +1615,42 @@ MAX(CASE WHEN dobut.starttime < dobut.sevendays_admitted
 FROM dobutamine dobut
 GROUP BY dobut.stay_id;
 
+
+---Repeating the process for milrinone--
+
+CREATE OR REPLACE TABLE `mimic-iv-ext-2025.FAI_Sepsis.milrinone` AS
+WITH milrinone AS(
+    SELECT s.*,m.starttime, m.endtime
+      FROM `physionet-data.mimiciv_3_1_derived.milrinone` m
+        RIGHT  JOIN `mimic-iv-ext-2025.FAI_Sepsis.septic_hfref_full_26` s
+          ON d.stay_id = s.stay_id
+)
+SELECT mil.stay_id,
+MAX(CASE WHEN mil.starttime < mil.oneday_admitted 
+          AND mil.endtime > mil.intime 
+          THEN 1 ELSE 0 END) AS day1_milrinone,
+MAX(CASE WHEN mil.starttime < mil.admitted_48_hrs 
+          AND mil.endtime > mil.oneday_admitted
+          THEN 1 ELSE 0 END) AS day2_milrinone,
+MAX(CASE WHEN mil.starttime < mil.threedays_admitted 
+          AND mil.endtime > mil.admitted_48_hrs
+          THEN 1 ELSE 0 END) AS day3_milrinone,
+MAX(CASE WHEN mil.starttime < mil.fourdays_admitted 
+          AND mil.endtime > mil.threedays_admitted 
+          THEN 1 ELSE 0 END) AS day4_milrinone,
+MAX(CASE WHEN mil.starttime < mil.fivedays_admitted 
+          AND mil.endtime > mil.fourdays_admitted
+          THEN 1 ELSE 0 END)AS day5_milrinone,
+MAX(CASE WHEN mil.starttime < mil.sixdays_admitted 
+          AND mil.endtime > mil.fivedays_admitted 
+          THEN 1 ELSE 0 END) AS day6_milrinone,
+MAX(CASE WHEN mil.starttime < mil.sevendays_admitted 
+          AND mil.endtime > mil.sevendays_admitted
+          THEN 1 ELSE 0 END) AS day7_milrinone
+FROM milrinone mil
+GROUP BY mil.stay_id;
+
+
 ---Repeating the process for dopamine--
 
 CREATE OR REPLACE TABLE `mimic-iv-ext-2025.FAI_Sepsis.dopamine` AS
@@ -1754,6 +1789,7 @@ GROUP BY vaso.stay_id;
 CREATE OR REPLACE TABLE `mimic-iv-ext-2025.FAI_Sepsis.septic_hfref_full_27` AS
 SELECT s.*,
        dobut.day1_dobutamine, dobut.day2_dobutamine, dobut.day3_dobutamine, dobut.day4_dobutamine, dobut.day5_dobutamine, dobut.day6_dobutamine, dobut.day7_dobutamine,
+       mil.day1_milrinone, mil.day2_milrinone, mil.day3_milrinone, mil.day4_milrinone, mil.day5_milrinone, mil.day6_milrinone, mil.day7_milrinone,
        dop.day1_dopamine, dop.day2_dopamine, dop.day3_dopamine, dop.day4_dopamine, dop.day5_dopamine, dop.day6_dopamine, dop.day7_dopamine,
        epi.day1_epi, epi.day2_epi, epi.day3_epi, epi.day4_epi, epi.day5_epi, epi.day6_epi, epi.day7_epi,
        ne.day1_norepi, ne.day2_norepi, ne.day3_norepi, ne.day4_norepi, ne.day5_norepi, ne.day6_norepi, ne.day7_norepi,
@@ -1761,14 +1797,16 @@ SELECT s.*,
 FROM `mimic-iv-ext-2025.FAI_Sepsis.septic_hfref_full_26` s
   LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.dobutamine` dobut
   ON s.stay_id = dobut.stay_id 
-    LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.dopamine` dop
-      ON s.stay_id = dop.stay_id
-        LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.epinephrine` epi
-          ON s.stay_id = epi.stay_id
-            LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.norepinephrine` ne
-              ON s.stay_id = ne.stay_id
-                LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.vasopressin` v
-                  ON s.stay_id = v.stay_id;
+    LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.milrinone` mil
+      ON s.stay_id = mil.stay_id
+      LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.dopamine` dop
+        ON s.stay_id = dop.stay_id
+          LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.epinephrine` epi
+            ON s.stay_id = epi.stay_id
+              LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.norepinephrine` ne
+                ON s.stay_id = ne.stay_id
+                  LEFT JOIN `mimic-iv-ext-2025.FAI_Sepsis.vasopressin` v
+                    ON s.stay_id = v.stay_id;
 
 
 
