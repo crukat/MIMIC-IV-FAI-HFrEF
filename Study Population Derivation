@@ -1951,12 +1951,12 @@ CASE
 --ESRD 
 --ICU los <= 2.0 days
 --Prior AKI (note that only prior AKIs occurring at BIDMC will be captured)
---Not receiving pressors in first 48h of ICU admission
+--Not receiving pressors in first 24h of ICU admission
 --Not meeting the following criteria in first 48h of ICU admission: SOFA 2+ and suspicion of infection--
 
 SELECT s.*
 FROM `mimic-iv-ext-2025.FAI_Sepsis.septic_hfref_full_29` s
-WHERE (s.sofa_sepsis_first48=1 AND s.susp_infection_first48=1 AND s.ned_received= 1 AND s.prior_AKI_flag= 0 AND s.los > 2.0 AND s.hadm_id NOT IN
+WHERE (s.sofa_sepsis_first48=1 AND s.susp_infection_first48=1 AND s.day1_peak_NED IS NOT NULL AND s.prior_AKI_flag= 0 AND s.los > 2.0 AND s.hadm_id NOT IN
 (SELECT DISTINCT d.hadm_id
   FROM `physionet-data.mimiciv_3_1_hosp.diagnoses_icd` d 
     WHERE LOWER(d.icd_code) IN ("40301","40311","40391","40402","40403","40412","40413","40492","40493",
