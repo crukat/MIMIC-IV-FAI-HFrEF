@@ -1623,7 +1623,7 @@ WITH milrinone AS(
     SELECT s.*,m.starttime, m.endtime
       FROM `physionet-data.mimiciv_3_1_derived.milrinone` m
         RIGHT  JOIN `mimic-iv-ext-2025.FAI_Sepsis.septic_hfref_full_26` s
-          ON d.stay_id = s.stay_id
+          ON m.stay_id = s.stay_id
 )
 SELECT mil.stay_id,
 MAX(CASE WHEN mil.starttime < mil.oneday_admitted 
